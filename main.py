@@ -1,16 +1,21 @@
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
+from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
 
-class CalculatorApp(App):
+class CustomCalculatorApp(App):
     def build(self):
-        gridlay = GridLayout(cols = 6)
+        boxlay = BoxLayout(orientation = "vertical")
+        gridlay = GridLayout(cols = 4)
+
+        boxlay.add_widget(Label(text="0"))
 
         gridlay.add_widget(Button(text="%"))
         gridlay.add_widget(Button(text="√"))
         gridlay.add_widget(Button(text="x²"))
-        gridlay.add_widget(Button(text="¹/ₓ"))
+        gridlay.add_widget(Button(text="¹/x"))
 
         gridlay.add_widget(Button(text="CE"))
         gridlay.add_widget(Button(text="C"))
@@ -37,7 +42,8 @@ class CalculatorApp(App):
         gridlay.add_widget(Button(text="."))
         gridlay.add_widget(Button(text="="))
 
-        return gridlay
+        boxlay.add_widget(gridlay)
+        return boxlay
 
-if __name__ == "_main__":
-    CalculatorApp().run()
+if __name__ == "__main__":
+    CustomCalculatorApp().run()
