@@ -15,15 +15,34 @@ class CustomCalculatorApp(App):
         self.lebalboxlay.text = self.formula
 
     def add_number(self, instance):
-        if self.formula == "0":
+        if instance.text == ".":
+            last_number = ""
+
+            for element in reversed(self.formula):
+                if element.isdigit() or element == ".":
+                    last_number += element
+                else:
+                    break
+
+            if "." in last_number:
+                return
+
+        if self.formula == "0" and instance.text != ".":
             self.formula = ""
 
         self.formula += str(instance.text)
         self.update_label()
 
     def add_operation(self, instance):
-        self.formula += str(instance.text)
+        if self.formula[-1] in ".0123456789√":
+            self.formula += str(instance.text)
+        elif self.formula[-1] in "÷×-+":
+           self.formula = self.formula[:-1] + str(instance.text)
+
         self.update_label()
+
+    def calc_result(self, instance):
+        self.lebalboxlay.text = str(eval(self.lebalboxlay.text))
 
     def build(self):
         self.formula = "0"
@@ -34,20 +53,20 @@ class CustomCalculatorApp(App):
                                 size_hint = (1, 0.4), text_size = (400 - 20, 500 * 0.4 - 20))
         boxlay.add_widget(self.lebalboxlay)
 
-        buttons = [ "%", "√", "x²", "¹/x",
+        buttons = [ "%", "√", "xʸ", "¹/x",
                     "CE", "C", "⌫", "÷",
                     "7", "8", "9", "×",
                     "4", "5", "6", "-",
                     "1", "2", "3", "+",
-                    "±", "0", ".", "="
+                    "π", "0", ".", "="
                     ]
         for btn in buttons:
             if btn in ".0123456789":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
-            elif btn in "%√÷×-+±=":
+            elif btn in "%√÷×-+π":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
             else:
-                gridlay.add_widget(Button(text=btn))
+                gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
         boxlay.add_widget(gridlay)
         return boxlay
 
