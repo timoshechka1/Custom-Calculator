@@ -11,7 +11,15 @@ Config.set("graphics", "width", 400)
 Config.set("graphics", "height", 500)
 
 class CustomCalculatorApp(App):
+    def add_number(self, instance):
+        if self.formula == "0":
+            self.formula = ""
+
+        self.formula += str(instance.text)
+        print(self.formula)
+
     def build(self):
+        self.formula = "0"
         boxlay = BoxLayout(orientation = "vertical", padding = 10)
         gridlay = GridLayout(cols = 4, spacing = 3, size_hint = (1, 0.6), )
 
@@ -26,8 +34,10 @@ class CustomCalculatorApp(App):
                     "±", "0", ".", "="
                     ]
         for btn in buttons:
-            gridlay.add_widget(Button(text=btn))
-
+            if btn in "123456789":
+                gridlay.add_widget(Button(text=btn, on_press = self.add_number))
+            else:
+                gridlay.add_widget(Button(text=btn))
         boxlay.add_widget(gridlay)
         return boxlay
 
