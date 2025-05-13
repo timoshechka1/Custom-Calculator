@@ -18,6 +18,10 @@ class CustomCalculatorApp(App):
         self.formula += str(instance.text)
         print(self.formula)
 
+    def add_operation(self, instance):
+        self.formula += str(instance.text)
+        print(self.formula)
+
     def build(self):
         self.formula = "0"
         boxlay = BoxLayout(orientation = "vertical", padding = 10)
@@ -34,8 +38,10 @@ class CustomCalculatorApp(App):
                     "±", "0", ".", "="
                     ]
         for btn in buttons:
-            if btn in "123456789":
+            if btn in ".0123456789":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
+            elif btn in "%√÷×-+±=":
+                gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
             else:
                 gridlay.add_widget(Button(text=btn))
         boxlay.add_widget(gridlay)
