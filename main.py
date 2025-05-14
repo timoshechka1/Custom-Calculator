@@ -15,9 +15,11 @@ class CustomCalculatorApp(App):
         self.lebalboxlay.text = self.formula
 
     def add_number(self, instance):
-        if instance.text == ".":
-            last_number = ""
+        num_eval_map = {"π": "3.14159265"}
+        symbol = instance.text
 
+        if symbol == ".":
+            last_number = ""
             for element in reversed(self.formula):
                 if element.isdigit() or element == ".":
                     last_number += element
@@ -25,14 +27,26 @@ class CustomCalculatorApp(App):
                     break
 
             if "." in last_number:
+                    return
+
+        if self.formula[-1] == "π" and symbol not in "÷×-+":
+            return
+
+        if symbol == "π":
+            if self.formula[-1] not in "÷×-+" and self.formula != "0":
                 return
+            if self.formula == "0" or self.formula == "0.0":
+                self.formula = ""
+                self.eval_formula = ""
+            self.formula += "π"
+            self.eval_formula += num_eval_map["π"]
+        else:
+            if self.formula == "0" or self.formula == "0.0" and symbol != ".":
+                self.formula = ""
+                self.eval_formula = ""
+            self.formula += symbol
+            self.eval_formula += symbol
 
-        if self.formula == "0" and instance.text != ".":
-            self.formula = ""
-            self.eval_formula = ""
-
-        self.formula += str(instance.text)
-        self.eval_formula += str(instance.text)
         self.update_label()
 
     def add_operation(self, instance):
@@ -40,7 +54,7 @@ class CustomCalculatorApp(App):
         op_eval_map = {"÷": "/", "×": "*", "+": "+", "-": "-"}
         op_eval = op_eval_map.get(op_display)
 
-        if self.formula[-1] in ".0123456789√":
+        if self.formula[-1] in ".0123456789√π":
             self.formula += op_display
             self.eval_formula += op_eval
         elif self.formula[-1] in "÷×-+":
@@ -51,9 +65,9 @@ class CustomCalculatorApp(App):
 
     def calc_result(self, instance):
         try:
-            result = str(eval(self.eval_formula))
-            self.formula = result
-            self.eval_formula = result
+            result = eval(self.eval_formula)
+            self.formula = str(round(result, 8))
+            self.eval_formula = str(round(result, 8))
             self.update_label()
         except Exception as e:
             self.formula = "Ошибка"
@@ -78,9 +92,9 @@ class CustomCalculatorApp(App):
                     "π", "0", ".", "="
                     ]
         for btn in buttons:
-            if btn in ".0123456789":
+            if btn in ".0123456789π":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
-            elif btn in "%√÷×-+π":
+            elif btn in "%√÷×-+":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
             else:
                 gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
