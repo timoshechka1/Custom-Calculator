@@ -29,23 +29,40 @@ class CustomCalculatorApp(App):
 
         if self.formula == "0" and instance.text != ".":
             self.formula = ""
+            self.eval_formula = ""
 
         self.formula += str(instance.text)
+        self.eval_formula += str(instance.text)
         self.update_label()
 
     def add_operation(self, instance):
+        op_display = instance.text
+        op_eval_map = {"÷": "/", "×": "*", "+": "+", "-": "-"}
+        op_eval = op_eval_map.get(op_display)
+
         if self.formula[-1] in ".0123456789√":
-            self.formula += str(instance.text)
+            self.formula += op_display
+            self.eval_formula += op_eval
         elif self.formula[-1] in "÷×-+":
-           self.formula = self.formula[:-1] + str(instance.text)
+           self.formula = self.formula[:-1] + op_display
+           self.eval_formula = self.eval_formula[:-1] + op_eval
 
         self.update_label()
 
     def calc_result(self, instance):
-        self.lebalboxlay.text = str(eval(self.lebalboxlay.text))
+        try:
+            result = str(eval(self.eval_formula))
+            self.formula = result
+            self.eval_formula = result
+            self.update_label()
+        except Exception as e:
+            self.formula = "Ошибка"
+            self.eval_formula = "0"
+            self.update_label()
 
     def build(self):
         self.formula = "0"
+        self.eval_formula = "0"
         boxlay = BoxLayout(orientation = "vertical", padding = 10)
         gridlay = GridLayout(cols = 4, spacing = 3, size_hint = (1, 0.6), )
 
