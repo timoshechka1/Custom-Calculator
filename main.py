@@ -1,3 +1,5 @@
+import math
+
 from kivy.app import App
 from kivy.config import Config
 from kivy.uix.button import Button
@@ -15,7 +17,7 @@ class CustomCalculatorApp(App):
         self.lebalboxlay.text = self.formula
 
     def add_number(self, instance):
-        num_eval_map = {"π": "3.14159265"}
+        num_eval_map = {"π": "math.pi"}
         symbol = instance.text
 
         if symbol == ".":
@@ -51,10 +53,21 @@ class CustomCalculatorApp(App):
 
     def add_operation(self, instance):
         op_display = instance.text
-        op_eval_map = {"÷": "/", "×": "*", "+": "+", "-": "-"}
+        op_eval_map = {"÷": "/", "×": "*", "+": "+", "-": "-", "√": "math.sqrt("}
         op_eval = op_eval_map.get(op_display)
 
-        if self.formula[-1] in ".0123456789√π":
+        if op_display == "√":
+            self.auto_close_sqrt = True
+
+        if op_display == "√":
+            if self.formula == "0" or self.formula == "" or self.formula == "0.0":
+                self.formula = "√"
+                self.eval_formula = op_eval
+            else:
+                self.formula += "√"
+                self.eval_formula += op_eval
+            self.auto_close_sqrt = True
+        elif self.formula[-1] in ".0123456789√π":
             self.formula += op_display
             self.eval_formula += op_eval
         elif self.formula[-1] in "÷×-+" and op_display in "÷×-+":
@@ -65,6 +78,9 @@ class CustomCalculatorApp(App):
 
     def calc_result(self, instance):
         try:
+            if self.auto_close_sqrt:
+                self.eval_formula += ")"
+                self.auto_close_sqrt = False
             result = eval(self.eval_formula)
             self.formula = str(round(result, 8))
             self.eval_formula = str(round(result, 8))
@@ -95,7 +111,7 @@ class CustomCalculatorApp(App):
         for btn in buttons:
             if btn in ".0123456789π":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
-            elif btn in "%√÷×-+()" or btn == "log" or btn or "ln":
+            elif btn in "%√÷×-+()" or btn == "log" or btn == "ln":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
             else:
                 gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
