@@ -57,7 +57,7 @@ class CustomCalculatorApp(App):
         if self.formula[-1] in ".0123456789√π":
             self.formula += op_display
             self.eval_formula += op_eval
-        elif self.formula[-1] in "÷×-+":
+        elif self.formula[-1] in "÷×-+" and op_display in "÷×-+":
            self.formula = self.formula[:-1] + op_display
            self.eval_formula = self.eval_formula[:-1] + op_eval
 
@@ -84,8 +84,9 @@ class CustomCalculatorApp(App):
                                 size_hint = (1, 0.4), text_size = (400 - 20, 500 * 0.4 - 20))
         boxlay.add_widget(self.lebalboxlay)
 
-        buttons = [ "%", "√", "xʸ", "¹/x",
-                    "CE", "C", "⌫", "÷",
+        buttons = [ "%", "CE", "C", "⌫",
+                    "log", "ln", "xʸ", "¹/x",
+                    "√", "(", ")", "÷",
                     "7", "8", "9", "×",
                     "4", "5", "6", "-",
                     "1", "2", "3", "+",
@@ -94,7 +95,7 @@ class CustomCalculatorApp(App):
         for btn in buttons:
             if btn in ".0123456789π":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
-            elif btn in "%√÷×-+":
+            elif btn in "%√÷×-+()" or btn == "log" or btn or "ln":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
             else:
                 gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
