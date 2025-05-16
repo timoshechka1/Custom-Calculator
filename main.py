@@ -49,19 +49,10 @@ class CustomCalculatorApp(App):
             self.formula += symbol
             self.eval_formula += symbol
 
-        if self.just_opened_sqrt:
-            if symbol.isdigit() or symbol == "π" or symbol == ".":
-                self.eval_formula += ")"
-                self.just_opened_sqrt = False
-                self.auto_close_stack -= 1
-                self.update_label()
-                return
-            elif symbol == "(":
-                self.formula += symbol
-                self.eval_formula += symbol
-                self.auto_close_stack += 1
-                self.update_label()
-                return
+        if self.just_opened_sqrt and symbol == "(":
+            self.formula += symbol
+            self.eval_formula += symbol
+            self.auto_close_stack += 1
 
         self.update_label()
 
@@ -75,43 +66,41 @@ class CustomCalculatorApp(App):
             if self.formula == "0" or self.formula == "" or self.formula == "0.0":
                 self.formula = "√"
                 self.eval_formula = op_eval
-                self.just_opened_sqrt = True
-                self.auto_close_stack += 1
-                self.update_label()
-                return
             else:
                 self.formula += "√"
                 self.eval_formula += op_eval
-                self.just_opened_sqrt = True
-                self.auto_close_stack += 1
-                self.update_label()
-                return
+            self.just_opened_sqrt = True
+            self.auto_close_stack += 1
+            self.update_label()
+            return
+
+        if self.just_opened_sqrt and op_display in "÷×-+":
+            self.eval_formula += ")"
+            self.just_opened_sqrt = False
+            self.auto_close_stack -= 1
 
         if op_display == "(":
             if self.formula == "0" or self.formula == "" or self.formula == "0.0":
                 self.formula = "("
                 self.eval_formula = "("
-                self.auto_close_stack += 1
-                self.update_label()
-                return
             else:
                 self.formula += "("
                 self.eval_formula += "("
-                self.auto_close_stack += 1
-                self.update_label()
-                return
+            self.auto_close_stack += 1
+            self.update_label()
+            return
 
         if op_display == ")":
+            if self.auto_close_stack > 0:
+                self.auto_close_stack -= 1
             if self.formula == "0" or self.formula == "" or self.formula == "0.0":
                 self.formula = ")"
                 self.eval_formula = ")"
-                self.update_label()
-                return
             else:
                 self.formula += ")"
                 self.eval_formula += ")"
-                self.update_label()
-                return
+            self.update_label()
+            return
 
         if self.formula[-1] in ".0123456789π()%":
             self.formula += op_display
@@ -124,6 +113,9 @@ class CustomCalculatorApp(App):
 
     def calc_result(self, instance):
         try:
+            while self.auto_close_stack > 0:
+                self.eval_formula += ")"
+                self.auto_close_stack -= 1
             self.just_opened_sqrt = False
             self.auto_close_stack = 0
             print(self.eval_formula)
