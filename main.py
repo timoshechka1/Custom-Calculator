@@ -35,7 +35,7 @@ class CustomCalculatorApp(App):
             return
 
         if symbol == "π":
-            if self.formula[-1] not in "÷×-+" and self.formula != "0":
+            if self.formula[-1] not in "÷×-+(√" and self.formula != "0":
                 return
             if self.formula == "0" or self.formula == "0.0":
                 self.formula = ""
@@ -49,25 +49,71 @@ class CustomCalculatorApp(App):
             self.formula += symbol
             self.eval_formula += symbol
 
+        if self.just_opened_sqrt:
+            if symbol.isdigit() or symbol == "π" or symbol == ".":
+                self.eval_formula += ")"
+                self.just_opened_sqrt = False
+                self.auto_close_stack -= 1
+                self.update_label()
+                return
+            elif symbol == "(":
+                self.formula += symbol
+                self.eval_formula += symbol
+                self.auto_close_stack += 1
+                self.update_label()
+                return
+
         self.update_label()
 
     def add_operation(self, instance):
         op_display = instance.text
-        op_eval_map = {"÷": "/", "×": "*", "+": "+", "-": "-", "√": "math.sqrt("}
+        op_eval_map = {"÷": "/", "×": "*", "+": "+", "-": "-", "√": "math.sqrt(", "(": "(", ")": ")",
+                       "log": "math.log10(", "ln": "math.log(", "¹/x": "**-1", "%": "/100", "xʸ": "**"}
         op_eval = op_eval_map.get(op_display)
-
-        if op_display == "√":
-            self.auto_close_sqrt = True
 
         if op_display == "√":
             if self.formula == "0" or self.formula == "" or self.formula == "0.0":
                 self.formula = "√"
                 self.eval_formula = op_eval
+                self.just_opened_sqrt = True
+                self.auto_close_stack += 1
+                self.update_label()
+                return
             else:
                 self.formula += "√"
                 self.eval_formula += op_eval
-            self.auto_close_sqrt = True
-        elif self.formula[-1] in ".0123456789√π":
+                self.just_opened_sqrt = True
+                self.auto_close_stack += 1
+                self.update_label()
+                return
+
+        if op_display == "(":
+            if self.formula == "0" or self.formula == "" or self.formula == "0.0":
+                self.formula = "("
+                self.eval_formula = "("
+                self.auto_close_stack += 1
+                self.update_label()
+                return
+            else:
+                self.formula += "("
+                self.eval_formula += "("
+                self.auto_close_stack += 1
+                self.update_label()
+                return
+
+        if op_display == ")":
+            if self.formula == "0" or self.formula == "" or self.formula == "0.0":
+                self.formula = ")"
+                self.eval_formula = ")"
+                self.update_label()
+                return
+            else:
+                self.formula += ")"
+                self.eval_formula += ")"
+                self.update_label()
+                return
+
+        if self.formula[-1] in ".0123456789π()%":
             self.formula += op_display
             self.eval_formula += op_eval
         elif self.formula[-1] in "÷×-+" and op_display in "÷×-+":
@@ -78,9 +124,9 @@ class CustomCalculatorApp(App):
 
     def calc_result(self, instance):
         try:
-            if self.auto_close_sqrt:
-                self.eval_formula += ")"
-                self.auto_close_sqrt = False
+            self.just_opened_sqrt = False
+            self.auto_close_stack = 0
+            print(self.eval_formula)
             result = eval(self.eval_formula)
             self.formula = str(round(result, 8))
             self.eval_formula = str(round(result, 8))
@@ -93,6 +139,8 @@ class CustomCalculatorApp(App):
     def build(self):
         self.formula = "0"
         self.eval_formula = "0"
+        self.auto_close_stack = 0
+        self.just_opened_sqrt = False
         boxlay = BoxLayout(orientation = "vertical", padding = 10)
         gridlay = GridLayout(cols = 4, spacing = 3, size_hint = (1, 0.6), )
 
