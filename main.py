@@ -15,6 +15,7 @@ Config.set("graphics", "height", 500)
 class CustomCalculatorApp(App):
     def update_label(self):
         self.lebalboxlay.text = self.formula
+        self.lebalboxlay.text_size = (self.lebalboxlay.width - 10, self.lebalboxlay.height - 10)
 
     def add_number(self, instance):
         num_eval_map = {"π": "math.pi"}
@@ -203,8 +204,9 @@ class CustomCalculatorApp(App):
         boxlay = BoxLayout(orientation = "vertical", padding = 10)
         gridlay = GridLayout(cols = 4, spacing = 3, size_hint = (1, 0.6), )
 
-        self.lebalboxlay = Label(text="0", font_size = 40, halign = "right", valign = "bottom",
-                                size_hint = (1, 0.4), text_size = (400 - 20, 500 * 0.4 - 20))
+        self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom", size_hint=(1, 0.4),
+                                 text_size=(0, 0), shorten=True, max_lines=2)
+        self.lebalboxlay.bind(size=lambda *args: self.update_label())
         boxlay.add_widget(self.lebalboxlay)
 
         buttons = [ "%", "CE", "C", "⌫",
