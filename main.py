@@ -151,6 +151,11 @@ class CustomCalculatorApp(App):
         self.just_opened_sqrt = False
         self.update_label()
 
+    def clear_enrty(self, instance):
+        self.formula = "0"
+        self.eval_formula = "0"
+        self.update_label()
+
     def build(self):
         self.formula = "0"
         self.eval_formula = "0"
@@ -176,10 +181,10 @@ class CustomCalculatorApp(App):
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
             elif btn in "%√÷×-+()" or btn == "log" or btn == "ln" or btn == "xʸ" or btn == "¹/x":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
-            elif btn in "CE":
+            elif btn == "CE":
                 gridlay.add_widget(Button(text = btn, on_press = self.clear_all))
-            elif 0:
-                pass
+            elif btn == "C":
+                gridlay.add_widget(Button(text = btn, on_press = self.clear_enrty))
             elif 0:
                 pass
             else:
