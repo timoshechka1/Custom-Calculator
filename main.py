@@ -144,6 +144,13 @@ class CustomCalculatorApp(App):
             self.eval_formula = "0"
             self.update_label()
 
+    def clear_all(self, instance):
+        self.formula = "0"
+        self.eval_formula = "0"
+        self.auto_close_stack = 0
+        self.just_opened_sqrt = False
+        self.update_label()
+
     def build(self):
         self.formula = "0"
         self.eval_formula = "0"
@@ -169,6 +176,12 @@ class CustomCalculatorApp(App):
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
             elif btn in "%√÷×-+()" or btn == "log" or btn == "ln" or btn == "xʸ" or btn == "¹/x":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
+            elif btn in "CE":
+                gridlay.add_widget(Button(text = btn, on_press = self.clear_all))
+            elif 0:
+                pass
+            elif 0:
+                pass
             else:
                 gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
         boxlay.add_widget(gridlay)
