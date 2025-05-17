@@ -85,6 +85,12 @@ class CustomCalculatorApp(App):
             self.update_label()
             return
 
+        if op_display == "¹/x":
+            self.formula += "^(-1)"
+            self.eval_formula += op_eval
+            self.update_label()
+            return
+
         if op_display == "(":
             if self.formula == "0" or self.formula == "" or self.formula == "0.0" or self.formula == "Ошибка":
                 self.formula = "("
