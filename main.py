@@ -16,6 +16,14 @@ class CustomCalculatorApp(App):
     def update_label(self):
         self.lebalboxlay.text = self.formula
         self.lebalboxlay.text_size = (self.lebalboxlay.width - 10, self.lebalboxlay.height - 10)
+        try:
+            preview = eval(self.eval_formula)
+            if isinstance(preview, float):
+                preview = round(preview, 8)
+            self.preview_label.text = f"= {preview}"
+        except:
+            self.preview_label.text = ""
+        self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
 
     def add_number(self, instance):
         num_eval_map = {"π": "math.pi"}
@@ -206,8 +214,12 @@ class CustomCalculatorApp(App):
 
         self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom", size_hint=(1, 0.4),
                                  text_size=(0, 0), shorten=True, max_lines=2)
+        self.preview_label = Label( text="", font_size=20, halign="right", valign="top", color=(0.6, 0.6, 0.6, 1),
+                                    size_hint=(1, 0.1), text_size=(0, 0))
         self.lebalboxlay.bind(size=lambda *args: self.update_label())
+        self.preview_label.bind(size=lambda *args: self.update_label())
         boxlay.add_widget(self.lebalboxlay)
+        boxlay.add_widget(self.preview_label)
 
         buttons = [ "%", "CE", "C", "⌫",
                     "log", "ln", "xʸ", "¹/x",
