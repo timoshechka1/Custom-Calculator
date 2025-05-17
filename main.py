@@ -16,15 +16,23 @@ class CustomCalculatorApp(App):
     def update_label(self):
         self.lebalboxlay.text = self.formula
         self.lebalboxlay.text_size = (self.lebalboxlay.width - 10, self.lebalboxlay.height - 10)
+
         try:
-            preview = eval(self.eval_formula)
-            if isinstance(preview, float):
+            if self.formula[-1] in ("÷", "×", "-", "+"):
+                preview = eval(self.eval_formula[:-1])
+            else:
+                preview = eval(self.eval_formula)
+
+            if isinstance(preview, float) and preview % 1 == 0:
+                preview = int(preview)
+            elif isinstance(preview, float):
                 preview = round(preview, 8)
             self.preview_label.text = f"= {preview}"
-        except (SyntaxError, ZeroDivisionError, ValueError, NameError, TypeError, OverflowError):
+        except (ZeroDivisionError, ValueError, NameError, TypeError, OverflowError):
             self.preview_label.text = "Ошибка"
         except Exception:
-            self.preview_label.text = f"= "
+            self.preview_label.text = ""
+
         self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
 
     def add_number(self, instance):
@@ -166,13 +174,19 @@ class CustomCalculatorApp(App):
             self.just_opened_sqrt = False
             self.auto_close_stack = 0
             print(self.eval_formula)
-            result = eval(self.eval_formula)
+
+            if self.formula[-1] in ("÷", "×", "-", "+"):
+                result = eval(self.eval_formula[:-1])
+            else:
+                result = eval(self.eval_formula)
+
             if result % 1 == 0:
                 self.formula = str(int(result))
                 self.eval_formula = str(int(result))
             else:
                 self.formula = str(round(result, 8))
                 self.eval_formula = str(round(result, 8))
+
             self.update_label()
         except Exception as e:
             self.formula = "Ошибка"
