@@ -43,7 +43,7 @@ class CustomCalculatorApp(App):
             self.formula += "π"
             self.eval_formula += num_eval_map["π"]
         else:
-            if self.formula == "0" or self.formula == "Ошибка" and symbol != ".":
+            if self.formula in ("0", "Ошибка") and symbol != ".":
                 self.formula = ""
                 self.eval_formula = ""
             self.formula += symbol
@@ -63,13 +63,25 @@ class CustomCalculatorApp(App):
         op_eval = op_eval_map.get(op_display)
 
         if op_display == "√":
-            if self.formula == "0" or self.formula == "" or self.formula == "Ошибка":
+            if self.formula in ("0", "", "Ошибка"):
                 self.formula = "√"
                 self.eval_formula = op_eval
             else:
                 self.formula += "√"
                 self.eval_formula += op_eval
             self.just_opened_sqrt = True
+            self.auto_close_stack += 1
+            self.update_label()
+            return
+
+        if op_display == "log":
+            if self.formula in ("0", "", "Ошибка"):
+                self.formula = "log("
+                self.eval_formula = op_eval
+            else:
+                self.formula += "log("
+                self.eval_formula += op_eval
+            self.just_opened_log = True
             self.auto_close_stack += 1
             self.update_label()
             return
@@ -92,7 +104,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "(":
-            if self.formula == "0" or self.formula == "" or self.formula == "Ошибка":
+            if self.formula in ("0", "", "Ошибка"):
                 self.formula = "("
                 self.eval_formula = "("
             else:
@@ -105,7 +117,7 @@ class CustomCalculatorApp(App):
         if op_display == ")":
             if self.auto_close_stack > 0:
                 self.auto_close_stack -= 1
-            if self.formula == "0" or self.formula == "" or self.formula == "Ошибка":
+            if self.formula in ("0", "", "Ошибка"):
                 self.formula = ")"
                 self.eval_formula = ")"
             else:
@@ -149,6 +161,7 @@ class CustomCalculatorApp(App):
         self.eval_formula = "0"
         self.auto_close_stack = 0
         self.just_opened_sqrt = False
+        self.just_opened_log = False
         self.update_label()
 
     def clear_enrty(self, instance):
@@ -174,6 +187,7 @@ class CustomCalculatorApp(App):
         self.eval_formula = "0"
         self.auto_close_stack = 0
         self.just_opened_sqrt = False
+        self.just_opened_log = False
         boxlay = BoxLayout(orientation = "vertical", padding = 10)
         gridlay = GridLayout(cols = 4, spacing = 3, size_hint = (1, 0.6), )
 
