@@ -37,13 +37,13 @@ class CustomCalculatorApp(App):
         if symbol == "π":
             if self.formula[-1] not in "÷×-+(√" and self.formula != "0":
                 return
-            if self.formula == "0" or self.formula == "0.0":
+            if self.formula == "0":
                 self.formula = ""
                 self.eval_formula = ""
             self.formula += "π"
             self.eval_formula += num_eval_map["π"]
         else:
-            if self.formula == "0" or self.formula == "0.0" or self.formula == "Ошибка" and symbol != ".":
+            if self.formula == "0" or self.formula == "Ошибка" and symbol != ".":
                 self.formula = ""
                 self.eval_formula = ""
             self.formula += symbol
@@ -63,7 +63,7 @@ class CustomCalculatorApp(App):
         op_eval = op_eval_map.get(op_display)
 
         if op_display == "√":
-            if self.formula == "0" or self.formula == "" or self.formula == "0.0" or self.formula == "Ошибка":
+            if self.formula == "0" or self.formula == "" or self.formula == "Ошибка":
                 self.formula = "√"
                 self.eval_formula = op_eval
             else:
@@ -92,7 +92,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "(":
-            if self.formula == "0" or self.formula == "" or self.formula == "0.0" or self.formula == "Ошибка":
+            if self.formula == "0" or self.formula == "" or self.formula == "Ошибка":
                 self.formula = "("
                 self.eval_formula = "("
             else:
@@ -105,7 +105,7 @@ class CustomCalculatorApp(App):
         if op_display == ")":
             if self.auto_close_stack > 0:
                 self.auto_close_stack -= 1
-            if self.formula == "0" or self.formula == "" or self.formula == "0.0" or self.formula == "Ошибка":
+            if self.formula == "0" or self.formula == "" or self.formula == "Ошибка":
                 self.formula = ")"
                 self.eval_formula = ")"
             else:
@@ -156,6 +156,19 @@ class CustomCalculatorApp(App):
         self.eval_formula = "0"
         self.update_label()
 
+    def backspace(self, instance):
+        if self.formula in ("0", "Ошибка"):
+            return
+
+        self.formula = self.formula[:-1]
+        self.eval_formula = self.eval_formula[-1]
+
+        if not self.formula:
+            self.formula = "0"
+            self.eval_formula = "0"
+
+        self.update_label()
+
     def build(self):
         self.formula = "0"
         self.eval_formula = "0"
@@ -179,14 +192,14 @@ class CustomCalculatorApp(App):
         for btn in buttons:
             if btn in ".0123456789π":
                 gridlay.add_widget(Button(text=btn, on_press = self.add_number))
-            elif btn in "%√÷×-+()" or btn == "log" or btn == "ln" or btn == "xʸ" or btn == "¹/x":
+            elif btn in ("%", "√", "÷", "×", "-", "+", "(", ")", "log", "ln", "xʸ", "¹/x"):
                 gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
             elif btn == "CE":
                 gridlay.add_widget(Button(text = btn, on_press = self.clear_all))
             elif btn == "C":
                 gridlay.add_widget(Button(text = btn, on_press = self.clear_enrty))
-            elif 0:
-                pass
+            elif btn in "⌫":
+                gridlay.add_widget(Button(text = btn, on_press = self.backspace))
             else:
                 gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
         boxlay.add_widget(gridlay)
