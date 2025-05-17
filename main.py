@@ -21,8 +21,10 @@ class CustomCalculatorApp(App):
             if isinstance(preview, float):
                 preview = round(preview, 8)
             self.preview_label.text = f"= {preview}"
-        except:
-            self.preview_label.text = ""
+        except (SyntaxError, ZeroDivisionError, ValueError, NameError, TypeError, OverflowError):
+            self.preview_label.text = "Ошибка"
+        except Exception:
+            self.preview_label.text = f"= "
         self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
 
     def add_number(self, instance):
@@ -174,7 +176,7 @@ class CustomCalculatorApp(App):
             self.update_label()
         except Exception as e:
             self.formula = "Ошибка"
-            self.eval_formula = "0"
+            self.eval_formula = "Ошибка"
             self.update_label()
 
     def clear_all(self, instance):
@@ -193,9 +195,29 @@ class CustomCalculatorApp(App):
     def backspace(self, instance):
         if self.formula in ("0", "Ошибка"):
             return
-
-        self.formula = self.formula[:-1]
-        self.eval_formula = self.eval_formula[-1]
+        if self.formula[-1] == "π":
+            self.formula = self.formula[:-1]
+            self.eval_formula = self.eval_formula[:-7]
+        elif self.formula[-1] == "√":
+            self.formula = self.formula[:-1]
+            self.eval_formula = self.eval_formula[:-10]
+            if self.auto_close_stack > 0:
+                self.auto_close_stack -= 1
+        elif self.formula[-1] == "log(":
+            self.formula = self.formula[:-1]
+            self.eval_formula = self.eval_formula[:-11]
+        elif self.formula[-1] == "ln(":
+            self.formula = self.formula[:-1]
+            self.eval_formula = self.eval_formula[:-9]
+        elif self.formula[-1] in ("^(-1)", "%"):
+            self.formula = self.formula[:-1]
+            self.eval_formula = self.eval_formula[:-4]
+        elif self.formula[-1] == "^":
+            self.formula = self.formula[:-1]
+            self.eval_formula = self.eval_formula[:-2]
+        else:
+            self.formula = self.formula[:-1]
+            self.eval_formula = self.eval_formula[:-1]
 
         if not self.formula:
             self.formula = "0"
