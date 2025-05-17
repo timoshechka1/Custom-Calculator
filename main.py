@@ -86,6 +86,18 @@ class CustomCalculatorApp(App):
             self.update_label()
             return
 
+        if op_display == "ln":
+            if self.formula in ("0", "", "Ошибка"):
+                self.formula = "ln("
+                self.eval_formula = op_eval
+            else:
+                self.formula += "ln("
+                self.eval_formula += op_eval
+            self.just_opened_log = True
+            self.auto_close_stack += 1
+            self.update_label()
+            return
+
         if self.just_opened_sqrt and op_display in "÷×-+":
             self.eval_formula += ")"
             self.just_opened_sqrt = False
