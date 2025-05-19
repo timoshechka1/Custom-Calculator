@@ -3,75 +3,15 @@ import re
 
 from kivy.app import App
 from kivy.config import Config
-from kivy.clock import Clock
 from kivy.uix.button import Button
-from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.graphics import Color, Line, Rectangle
 
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
 Config.set("graphics", "height", 500)
 Config.set('graphics', 'borderless', 0)
-
-class CRTEffect(Widget):
-    def __init__(self, **kwargs):
-        super(CRTEffect, self).__init__(**kwargs)
-        self.scanline_offset = 0
-        Clock.schedule_interval(self.update_effect, 1/30)
-
-    def update_effect(self, dt):
-        self.scanline_offset = (self.scanline_offset + 1) % 4
-        self.canvas.after.clear()
-        with self.canvas.after:
-            Color(0, 0, 0, 0.1)
-            for y in range(0, int(self.height), 4):
-                Line(points=[0, y + self.scanline_offset, self.width, y + self.scanline_offset], width=1)
-
-class RetroLabel(Label):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.font_name = 'fonts/PixelOperator-Bold.ttf'
-        self.font_size = 24
-        self.color = (0.2, 1, 0.2, 1)
-        self.halign = 'right'
-        self.valign = 'center'
-        self.bind(size=self.update_rect)
-
-    def update_rect(self, *args):
-        self.text_size = (self.width - 20, None)
-
-
-class RetroButton(Button):
-    def __init__(self, **kwargs):
-        super(RetroButton, self).__init__(**kwargs)
-
-        self.font_name = 'fonts/PixelOperator-Bold.ttf'
-        self.font_size = 20
-        self.color = (0, 1, 0, 1)
-
-        self.background_normal = ''
-        self.background_color = (0, 0, 0, 0)
-
-        with self.canvas.before:
-            Color(0.1, 0.1, 0.1, 1)
-            self.bg_rect = Rectangle(pos=self.pos, size=self.size)
-
-            Color(0.3, 0.3, 0.3, 0.3)
-            self.top_rect = Rectangle(
-                pos=(self.pos[0] + 1, self.pos[1] + 1),
-                size=(self.size[0] - 2, self.size[1] - 2)
-            )
-
-        self.bind(pos=self.update_rect, size=self.update_rect)
-
-    def update_rect(self, *args):
-        self.bg_rect.pos = self.pos
-        self.bg_rect.size = self.size
-        self.top_rect.pos = (self.pos[0] + 1, self.pos[1] + 1)
-        self.top_rect.size = (self.size[0] - 2, self.size[1] - 2)
 
 class CustomCalculatorApp(App):
     def update_label(self):
@@ -99,7 +39,7 @@ class CustomCalculatorApp(App):
             else:
                 self.preview_label.text = f"= {preview}"
         except (ZeroDivisionError, ValueError, NameError, TypeError, OverflowError):
-            self.preview_label.text = "Ошибка"
+            self.preview_label.text = "Erorr"
         except Exception:
             self.preview_label.text = ""
 
@@ -173,7 +113,7 @@ class CustomCalculatorApp(App):
             self.formula += "π"
             self.eval_formula += num_eval_map["π"]
         else:
-            if self.formula in ("0", "Ошибка") and symbol != ".":
+            if self.formula in ("0", "Erorr") and symbol != ".":
                 self.formula = ""
                 self.eval_formula = ""
             self.formula += symbol
@@ -194,7 +134,7 @@ class CustomCalculatorApp(App):
         op_eval = op_eval_map.get(op_display)
 
         if op_display == "√":
-            if self.formula in ("0", "", "Ошибка"):
+            if self.formula in ("0", "", "Erorr"):
                 self.formula = "√"
                 self.eval_formula = op_eval
             else:
@@ -206,7 +146,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "log":
-            if self.formula in ("0", "", "Ошибка"):
+            if self.formula in ("0", "", "Erorr"):
                 self.formula = "log("
                 self.eval_formula = op_eval
             else:
@@ -218,7 +158,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "ln":
-            if self.formula in ("0", "", "Ошибка"):
+            if self.formula in ("0", "", "Erorr"):
                 self.formula = "ln("
                 self.eval_formula = op_eval
             else:
@@ -247,7 +187,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "(":
-            if self.formula in ("0", "", "Ошибка"):
+            if self.formula in ("0", "", "Erorr"):
                 self.formula = "("
                 self.eval_formula = "("
             else:
@@ -260,7 +200,7 @@ class CustomCalculatorApp(App):
         if op_display == ")":
             if self.auto_close_stack > 0:
                 self.auto_close_stack -= 1
-            if self.formula in ("0", "", "Ошибка"):
+            if self.formula in ("0", "", "Erorr"):
                 self.formula = ")"
                 self.eval_formula = ")"
             else:
@@ -301,8 +241,8 @@ class CustomCalculatorApp(App):
 
             self.update_label()
         except Exception as e:
-            self.formula = "Ошибка"
-            self.eval_formula = "Ошибка"
+            self.formula = "Erorr"
+            self.eval_formula = "Erorr"
             self.update_label()
 
     def clear_all(self, instance):
@@ -319,7 +259,7 @@ class CustomCalculatorApp(App):
         self.update_label()
 
     def backspace(self, instance):
-        if self.formula in ("0", "Ошибка"):
+        if self.formula in ("0", "Erorr"):
             return
         if self.eval_formula[-12:-2] == "math.sqrt(":
             self.formula = self.formula[:-1]
