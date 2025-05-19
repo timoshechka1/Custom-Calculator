@@ -9,7 +9,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.graphics import Color, Line
+from kivy.graphics import Color, Line, Rectangle
 
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
@@ -43,8 +43,35 @@ class RetroLabel(Label):
     def update_rect(self, *args):
         self.text_size = (self.width - 20, None)
 
+
 class RetroButton(Button):
-    pass
+    def __init__(self, **kwargs):
+        super(RetroButton, self).__init__(**kwargs)
+
+        self.font_name = 'fonts/PixelOperator-Bold.ttf'
+        self.font_size = 20
+        self.color = (0, 1, 0, 1)
+
+        self.background_normal = ''
+        self.background_color = (0, 0, 0, 0)
+
+        with self.canvas.before:
+            Color(0.1, 0.1, 0.1, 1)
+            self.bg_rect = Rectangle(pos=self.pos, size=self.size)
+
+            Color(0.3, 0.3, 0.3, 0.3)
+            self.top_rect = Rectangle(
+                pos=(self.pos[0] + 1, self.pos[1] + 1),
+                size=(self.size[0] - 2, self.size[1] - 2)
+            )
+
+        self.bind(pos=self.update_rect, size=self.update_rect)
+
+    def update_rect(self, *args):
+        self.bg_rect.pos = self.pos
+        self.bg_rect.size = self.size
+        self.top_rect.pos = (self.pos[0] + 1, self.pos[1] + 1)
+        self.top_rect.size = (self.size[0] - 2, self.size[1] - 2)
 
 class CustomCalculatorApp(App):
     def update_label(self):
