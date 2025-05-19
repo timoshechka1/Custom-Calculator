@@ -21,6 +21,9 @@ class CRTEffect(Widget):
 class RetroLabel(Label):
     pass
 
+class RetroButton(Button):
+    pass
+
 class CustomCalculatorApp(App):
     def update_label(self):
         formatted_input = self.triad_separator(self.formula)
