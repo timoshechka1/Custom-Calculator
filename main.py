@@ -75,6 +75,7 @@ class CustomCalculatorApp(App):
 
         self.update_label()
 
+
     def add_operation(self, instance):
         op_display = instance.text
         op_eval_map = {"÷": "/", "×": "*", "+": "+", "-": "-", "√": "math.sqrt(", "(": "(", ")": ")",
@@ -209,7 +210,13 @@ class CustomCalculatorApp(App):
     def backspace(self, instance):
         if self.formula in ("0", "Ошибка"):
             return
-        if self.formula[-1] == "π":
+        if self.eval_formula[-12:-2] == "math.sqrt(":
+            self.formula = self.formula[:-1]
+            if self.auto_close_stack > 0:
+                self.auto_close_stack -= 1
+            self.just_opened_sqrt = True
+            self.eval_formula = self.eval_formula[:-2]
+        elif self.formula[-1] == "π":
             self.formula = self.formula[:-1]
             self.eval_formula = self.eval_formula[:-7]
         elif self.formula[-1] == "√":
@@ -280,6 +287,7 @@ class CustomCalculatorApp(App):
                 gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
         boxlay.add_widget(gridlay)
         return boxlay
+
 
 if __name__ == "__main__":
     CustomCalculatorApp().run()
