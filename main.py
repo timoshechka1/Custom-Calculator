@@ -15,9 +15,11 @@ Config.set("graphics", "width", 400)
 Config.set("graphics", "height", 500)
 Config.set('graphics', 'borderless', 0)
 
-class CRT_Effect(Widget):
+class CRTEffect(Widget):
     pass
 
+class RetroLabel(Label):
+    pass
 
 class CustomCalculatorApp(App):
     def update_label(self):
