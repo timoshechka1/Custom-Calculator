@@ -13,6 +13,7 @@ from pygments.formatters.latex import escape_tex
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
 Config.set("graphics", "height", 500)
+Config.set('graphics', 'borderless', 0)
 
 class CustomCalculatorApp(App):
     def update_label(self):
