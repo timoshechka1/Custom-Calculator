@@ -8,6 +8,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
+from pygments.formatters.latex import escape_tex
 
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
@@ -15,7 +16,8 @@ Config.set("graphics", "height", 500)
 
 class CustomCalculatorApp(App):
     def update_label(self):
-        self.lebalboxlay.text = self.formula
+        formatted_input = self.triad_separator(self.formula)
+        self.lebalboxlay.text = formatted_input
         self.lebalboxlay.text_size = (self.lebalboxlay.width - 10, self.lebalboxlay.height - 10)
 
         try:
@@ -25,12 +27,12 @@ class CustomCalculatorApp(App):
                 preview = eval(self.eval_formula)
 
             if isinstance(preview, (int, float)):
-                if isinstance(preview, float) and preview.is_integer():
+                if preview.is_integer():
                     preview = int(preview)
-                elif isinstance(preview, float):
+                else:
                     preview = round(preview, 8)
 
-                if abs(preview) >= 1000 and isinstance(preview, int):
+                if abs(preview) >= 1000:
                     formatted_preview = "{:,}".format(preview).replace(",", " ")
                 else:
                     formatted_preview = str(preview)
@@ -44,9 +46,45 @@ class CustomCalculatorApp(App):
 
         self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
 
+    def triad_separator(self, entered_number):
+        operators = ["÷", "×", "+", "-", "(", ")", "π", "√", "log", "ln"]
+        escaped_operators = [re.escape(op) for op in operators]
+        operators_patterns = "(" + "|".join(escaped_operators) + ")"
+
+        parts = re.split(operators_patterns, entered_number)
+        formatted_parts = []
+
+        for part in parts:
+            if not part:
+                continue
+
+            if part.replace(".", "", 1).isdigit():
+                if "." in part:
+                    integer_part, fractional_part = part.split(".", 1)
+                else:
+                    integer_part, fractional_part = part, ""
+
+                formatted_integer = integer_part
+                if len(integer_part) > 3:
+                    try:
+                        formatted_integer = "{:,}".format(int(integer_part)).replace(",", " ")
+                    except ValueError:
+                        pass
+
+                formatted_number = formatted_integer
+                if fractional_part:
+                    formatted_number += f".{fractional_part}"
+
+                formatted_parts.append(formatted_number)
+            else:
+                formatted_parts.append(part)
+
+        return ''.join(formatted_parts)
+
     def add_number(self, instance):
         num_eval_map = {"π": "math.pi"}
         symbol = instance.text
+
         match = re.search(r'(\d+\.?\d*|π)$', self.formula)
         if match:
             clean_number = match.group().replace('.', '').replace('π', '')
