@@ -249,7 +249,8 @@ class CustomCalculatorApp(App):
         else:
             self.formula = self.formula[:-1]
             self.eval_formula = self.eval_formula[:-1]
-
+            if self.auto_close_stack > 0:
+                self.auto_close_stack -= 1
 
         if not self.formula:
             self.formula = "0"
