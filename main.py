@@ -3,12 +3,13 @@ import re
 
 from kivy.app import App
 from kivy.config import Config
+from kivy.clock import Clock
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
-from pygments.formatters.latex import escape_tex
+from kivy.graphics import Color, Line
 
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
@@ -16,7 +17,18 @@ Config.set("graphics", "height", 500)
 Config.set('graphics', 'borderless', 0)
 
 class CRTEffect(Widget):
-    pass
+    def __init__(self, **kwargs):
+        super(CRTEffect, self).__init__(**kwargs)
+        self.scanline_offset = 0
+        Clock.schedule_interval(self.update_effect, 1/30)
+
+    def update_effect(self, dt):
+        self.scanline_offset = (self.scanline_offset + 1) % 4
+        self.canvas.after.clear()
+        with self.canvas.after:
+            Color(0, 0, 0, 0.1)
+            for y in range(0, int(self.height), 4):
+                Line(points=[0, y + self.scanline_offset, self.width, y + self.scanline_offset], width=1)
 
 class RetroLabel(Label):
     pass
