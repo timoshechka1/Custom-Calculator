@@ -31,7 +31,17 @@ class CRTEffect(Widget):
                 Line(points=[0, y + self.scanline_offset, self.width, y + self.scanline_offset], width=1)
 
 class RetroLabel(Label):
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.font_name = 'fonts/PixelOperator-Bold.ttf'
+        self.font_size = 24
+        self.color = (0.2, 1, 0.2, 1)
+        self.halign = 'right'
+        self.valign = 'center'
+        self.bind(size=self.update_rect)
+
+    def update_rect(self, *args):
+        self.text_size = (self.width - 20, None)
 
 class RetroButton(Button):
     pass
