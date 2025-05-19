@@ -15,6 +15,10 @@ Config.set("graphics", "width", 400)
 Config.set("graphics", "height", 500)
 Config.set('graphics', 'borderless', 0)
 
+class CRT_Effect(Widget):
+    pass
+
+
 class CustomCalculatorApp(App):
     def update_label(self):
         formatted_input = self.triad_separator(self.formula)
