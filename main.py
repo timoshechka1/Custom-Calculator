@@ -24,11 +24,19 @@ class CustomCalculatorApp(App):
             else:
                 preview = eval(self.eval_formula)
 
-            if isinstance(preview, float) and preview % 1 == 0:
-                preview = int(preview)
-            elif isinstance(preview, float):
-                preview = round(preview, 8)
-            self.preview_label.text = f"= {preview}"
+            if isinstance(preview, (int, float)):
+                if isinstance(preview, float) and preview.is_integer():
+                    preview = int(preview)
+                elif isinstance(preview, float):
+                    preview = round(preview, 8)
+
+                if abs(preview) >= 1000 and isinstance(preview, int):
+                    formatted_preview = "{:,}".format(preview).replace(",", " ")
+                else:
+                    formatted_preview = str(preview)
+                self.preview_label.text = f"= {formatted_preview}"
+            else:
+                self.preview_label.text = f"= {preview}"
         except (ZeroDivisionError, ValueError, NameError, TypeError, OverflowError):
             self.preview_label.text = "Ошибка"
         except Exception:
