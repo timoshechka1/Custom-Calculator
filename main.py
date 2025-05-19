@@ -1,4 +1,5 @@
 import math
+import re
 
 from kivy.app import App
 from kivy.config import Config
@@ -38,6 +39,11 @@ class CustomCalculatorApp(App):
     def add_number(self, instance):
         num_eval_map = {"π": "math.pi"}
         symbol = instance.text
+        match = re.search(r'(\d+\.?\d*|π)$', self.formula)
+        if match:
+            clean_number = match.group().replace('.', '').replace('π', '')
+            if len(clean_number) >= 15:
+                return
 
         if symbol == ".":
             last_number = ""
@@ -224,12 +230,16 @@ class CustomCalculatorApp(App):
             self.eval_formula = self.eval_formula[:-10]
             if self.auto_close_stack > 0:
                 self.auto_close_stack -= 1
-        elif self.formula[-1] == "log(":
-            self.formula = self.formula[:-1]
+        elif self.eval_formula[-11:] == "math.log10(":
+            self.formula = self.formula[:-4]
             self.eval_formula = self.eval_formula[:-11]
-        elif self.formula[-1] == "ln(":
-            self.formula = self.formula[:-1]
+            if self.auto_close_stack > 0:
+                self.auto_close_stack -= 1
+        elif self.eval_formula[-9:] == "math.log(":
+            self.formula = self.formula[:-3]
             self.eval_formula = self.eval_formula[:-9]
+            if self.auto_close_stack > 0:
+                self.auto_close_stack -= 1
         elif self.formula[-1] in ("^(-1)", "%"):
             self.formula = self.formula[:-1]
             self.eval_formula = self.eval_formula[:-4]
@@ -239,6 +249,7 @@ class CustomCalculatorApp(App):
         else:
             self.formula = self.formula[:-1]
             self.eval_formula = self.eval_formula[:-1]
+
 
         if not self.formula:
             self.formula = "0"
