@@ -1,17 +1,19 @@
-import math
-import re
-
-from kivy.app import App
 from kivy.config import Config
-from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
 
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
 Config.set("graphics", "height", 500)
 Config.set('graphics', 'borderless', 0)
+
+import math
+import re
+
+from kivy.app import App
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.spinner import Spinner
 
 class CustomCalculatorApp(App):
     def update_label(self):
@@ -44,6 +46,9 @@ class CustomCalculatorApp(App):
             self.preview_label.text = ""
 
         self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
+
+    def change_theme(self):
+        pass
 
     def triad_separator(self, entered_number):
         operators = ["÷", "×", "+", "-", "(", ")", "π", "√", "log", "ln"]
@@ -125,7 +130,6 @@ class CustomCalculatorApp(App):
             self.auto_close_stack += 1
 
         self.update_label()
-
 
     def add_operation(self, instance):
         op_display = instance.text
