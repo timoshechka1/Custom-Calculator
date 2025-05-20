@@ -1,4 +1,7 @@
 from kivy.config import Config
+from kivy.properties import ListProperty, StringProperty
+from settings import THEMES, DEFAULT_THEME
+
 
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
@@ -15,10 +18,15 @@ from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.spinner import Spinner
-from kivy.core.text import LabelBase
+from kivy.factory import Factory
+from kivy.lang import Builder
 
 
 class CustomCalculatorApp(App):
+    current_theme = StringProperty(DEFAULT_THEME)
+    bg_color = ListProperty(THEMES[DEFAULT_THEME]['bg_color'])
+    text_color = ListProperty(THEMES[DEFAULT_THEME]['text_color'])
+
     def update_label(self):
         formatted_input = self.triad_separator(self.formula)
         self.lebalboxlay.text = formatted_input
@@ -50,8 +58,69 @@ class CustomCalculatorApp(App):
 
         self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
 
-    def change_theme(self):
-        pass
+    def change_theme(self, spinner, text):
+        if text not in THEMES:
+            text = DEFAULT_THEME
+
+        self.current_theme = text
+        self.bg_color = THEMES[text]['bg_color']
+        self.text_color = THEMES[text]['text_color']
+        self.update_kv_theme()
+        self.theme_spinner.background_color = self.bg_color
+        self.theme_spinner.color = self.text_color
+
+    def update_kv_theme(self):
+        if not hasattr(self, 'root'):
+            return
+
+        for widget in self.root.walk():
+            if isinstance(widget, (Button, Label, Spinner)):
+                widget.background_color = self.bg_color
+                widget.color = self.text_color
+
+        self.update_spinner_dropdown(self.font_spinner)
+        self.update_spinner_dropdown(self.theme_spinner)
+
+    def update_spinner_dropdown(self, spinner):
+        if hasattr(spinner, '_dropdown') and spinner._dropdown:
+            dropdown = spinner._dropdown
+            dropdown.background_color = self.bg_color
+            if hasattr(dropdown, 'container'):
+                for child in dropdown.container.children:
+                    if isinstance(child, Button):
+                        child.background_color = self.bg_color
+                        child.color = self.text_color
+
+    def update_widget_colors(self):
+        if not hasattr(self, 'root'):
+            return
+
+        for widget in self.root.walk():
+            if isinstance(widget, (Button, Label, Spinner)):
+                current_font = widget.font_name
+                widget.background_color = self.bg_color
+                widget.color = self.text_color
+                widget.font_name = current_font
+
+        self.update_spinner_dropdown(self.font_spinner)
+        self.update_spinner_dropdown(self.theme_spinner)
+            
+    def on_start(self):
+        self.update_kv_theme()
+
+    def update_spinner_dropdown(self, spinner):
+        if hasattr(spinner, '_dropdown') and spinner._dropdown:
+            dropdown = spinner._dropdown
+            dropdown.background_color = self.bg_color
+            if hasattr(dropdown, 'container'):
+                for child in dropdown.container.children:
+                    if isinstance(child, Button):
+                        child.background_color = self.bg_color
+                        child.color = self.text_color
+
+    def parse_color(self, color_str):
+        parts = color_str.split(',')
+        return [float(p.strip()) for p in parts]
 
     def change_font(self, spinner, text):
         filename = None
@@ -92,9 +161,18 @@ class CustomCalculatorApp(App):
         self.lebalboxlay.font_name = font_path
         self.preview_label.font_name = font_path
         self.font_spinner.font_name = font_path
+        self.theme_spinner.font_name = font_path
 
         if hasattr(self.font_spinner, '_dropdown') and self.font_spinner._dropdown:
             dropdown = self.font_spinner._dropdown
+            if hasattr(dropdown, 'container'):
+                dropdown.container.font_name = font_path
+                for item in dropdown.container.children:
+                    if isinstance(item, Button):
+                        item.font_name = font_path
+
+        if hasattr(self.theme_spinner, '_dropdown') and self.theme_spinner._dropdown:
+            dropdown = self.theme_spinner._dropdown
             if hasattr(dropdown, 'container'):
                 dropdown.container.font_name = font_path
                 for item in dropdown.container.children:
@@ -372,6 +450,7 @@ class CustomCalculatorApp(App):
         self.just_opened_sqrt = False
         self.just_opened_log = False
         boxlay = BoxLayout(orientation="vertical", padding=10)
+        spinner_box = BoxLayout(orientation="horizontal", size_hint=(1, 0.1), spacing=5)
         gridlay = GridLayout(cols=4, spacing=3, size_hint=(1, 0.55))
 
         kv_path = "customcalculator.kv"
@@ -409,11 +488,24 @@ class CustomCalculatorApp(App):
         self.font_spinner = Spinner(
             text=initial_font if initial_font else "No fonts found",
             values=[item[0] for item in self.font_items] if self.font_items else ["No fonts available"],
-            size_hint=(1, 0.1),
+            size_hint=(0.7, 1),
             option_cls='SpinnerOption'
         )
         self.font_spinner.bind(text=self.change_font)
-        boxlay.add_widget(self.font_spinner)
+
+        self.theme_spinner = Spinner(
+            text=self.current_theme,
+            values=list(THEMES.keys()),
+            size_hint=(0.3, 1),
+            option_cls='SpinnerOption',
+            background_color=self.bg_color,
+            color=self.text_color
+        )
+        self.theme_spinner.bind(text=self.change_theme)
+        spinner_box.add_widget(self.font_spinner)
+        spinner_box.add_widget(self.theme_spinner)
+        boxlay.add_widget(spinner_box)
+        gridlay = GridLayout(cols=4, spacing=3, size_hint=(1, 0.55))
 
         self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom",
                                  size_hint=(1, 0.4), text_size=(0, 0), shorten=True, max_lines=2)
