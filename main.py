@@ -108,12 +108,6 @@ class CustomCalculatorApp(App):
                         if isinstance(widget, Button):
                             widget.font_name = font_path
 
-    def apply_theme(self):
-        pass
-
-    def apply_font(self):
-        pass
-
     def triad_separator(self, entered_number):
         operators = ["÷", "×", "+", "-", "(", ")", "π", "√", "log", "ln"]
         escaped_operators = [re.escape(op) for op in operators]
