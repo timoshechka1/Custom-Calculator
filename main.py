@@ -49,6 +49,9 @@ class CustomCalculatorApp(App):
 
     def change_theme(self):
         pass
+    
+    def change_font(self):
+        pass
 
     def triad_separator(self, entered_number):
         operators = ["÷", "×", "+", "-", "(", ")", "π", "√", "log", "ln"]
