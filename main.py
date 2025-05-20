@@ -7,6 +7,7 @@ Config.set('graphics', 'borderless', 0)
 
 import math
 import re
+import os
 
 from kivy.app import App
 from kivy.uix.button import Button
@@ -14,6 +15,8 @@ from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.spinner import Spinner
+from kivy.core.text import LabelBase
+
 
 class CustomCalculatorApp(App):
     def update_label(self):
@@ -49,9 +52,35 @@ class CustomCalculatorApp(App):
 
     def change_theme(self):
         pass
-    
-    def change_font(self):
-        pass
+
+    def change_font(self, spinner, text):
+        filename = None
+        for short_name, full_name in self.font_items:
+            if short_name == text:
+                filename = full_name
+                break
+
+        if filename is None:
+            return
+
+        kv_path = "customcalculator.kv"
+        with open(kv_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        new_lines = []
+        for line in lines:
+            if line.strip().startswith("font_name:"):
+                new_line = f'    font_name: "fonts/{filename}"\n'
+                new_lines.append(new_line)
+            else:
+                new_lines.append(line)
+
+        with open(kv_path, "w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+
+        self.lebalboxlay.font_name = f"fonts/{filename}"
+        self.preview_label.font_name = f"fonts/{filename}"
+        self.update_label()
 
     def apply_theme(self):
         pass
@@ -324,6 +353,34 @@ class CustomCalculatorApp(App):
         self.just_opened_log = False
         boxlay = BoxLayout(orientation = "vertical", padding = 10)
         gridlay = GridLayout(cols = 4, spacing = 3, size_hint = (1, 0.6), )
+
+        kv_path = "customcalculator.kv"
+        current_font = None
+        with open(kv_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("font_name:"):
+                    parts = line.strip().split(":")
+                    if len(parts) > 1:
+                        font_path = parts[1].strip().strip('"').strip("'")
+                        current_font = os.path.basename(font_path).split('.')[0]
+                    break
+
+        font_folder = "fonts"
+        font_files = [f for f in os.listdir(font_folder) if f.endswith(('.ttf', '.otf', '.ttc'))]
+        self.font_items = [(os.path.splitext(f)[0], f) for f in font_files]
+
+        if current_font and current_font in [item[0] for item in self.font_items]:
+            initial_font = current_font
+        else:
+            initial_font = self.font_items[0][0] if self.font_items else ""
+
+        self.font_spinner = Spinner(
+            text=initial_font,
+            values=[item[0] for item in self.font_items],
+            size_hint=(1, 0.1)
+        )
+        self.font_spinner.bind(text=self.change_font)
+        boxlay.add_widget(self.font_spinner)
 
         self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom", size_hint=(1, 0.4),
                                  text_size=(0, 0), shorten=True, max_lines=2)
