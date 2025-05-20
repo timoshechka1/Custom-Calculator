@@ -1,10 +1,36 @@
 <Button>:
-    background_color: 0.2, 0.6, 0.9, 1
-    color: 32, 255, 0, 1
-    font_size: 20
-    font_name: "fonts/DejaVuSansCondensed-Bold.ttf"
-
-<Label>
     background_color: 0.1, 0.1, 0.1, 1
     color: 0, 1, 0, 1
-    font_name: "fonts/DejaVuSansCondensed-Bold.ttf"
+    font_size: 20
+    font_name: "fonts/Inter-Light.otf"
+
+<Label>:
+    background_color: 0.1, 0.1, 0.1, 1
+    color: 0, 1, 0, 1
+    font_name: "fonts/Inter-Light.otf"
+
+<Spinner>:
+    background_color: 0.1, 0.1, 0.1, 1
+    color: 0, 1, 0, 1
+    font_size: 20
+    font_name: "fonts/Inter-Light.otf"
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<SpinnerOption>:
+    background_color: 0.1, 0.1, 0.1, 1
+    color: 0, 1, 0, 1
+    font_size: 20
+    font_name: "fonts/Inter-Light.otf"
+    height: 40
+
+<SpinnerDropdown>:
+    background_color: 0.1, 0.1, 0.1, 1
+    color: 0, 1, 0, 1
+    font_size: 20
+    font_name: "fonts/Inter-Light.otf"
+    height: 40

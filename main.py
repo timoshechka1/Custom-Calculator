@@ -63,14 +63,21 @@ class CustomCalculatorApp(App):
         if filename is None:
             return
 
+        font_path = f"fonts/{filename}"
+
+        if not os.path.exists(font_path):
+            print(f"Font file not found: {font_path}")
+            return
+
         kv_path = "customcalculator.kv"
         with open(kv_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         new_lines = []
         for line in lines:
-            if line.strip().startswith("font_name:"):
-                new_line = f'    font_name: "fonts/{filename}"\n'
+            if "font_name:" in line:
+                indent = line[:line.find("font_name:")]
+                new_line = f'{indent}font_name: "{font_path}"\n'
                 new_lines.append(new_line)
             else:
                 new_lines.append(line)
@@ -78,9 +85,28 @@ class CustomCalculatorApp(App):
         with open(kv_path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
 
-        self.lebalboxlay.font_name = f"fonts/{filename}"
-        self.preview_label.font_name = f"fonts/{filename}"
+        self.update_fonts(font_path)
         self.update_label()
+
+    def update_fonts(self, font_path):
+        self.lebalboxlay.font_name = font_path
+        self.preview_label.font_name = font_path
+        self.font_spinner.font_name = font_path
+
+        if hasattr(self.font_spinner, '_dropdown') and self.font_spinner._dropdown:
+            dropdown = self.font_spinner._dropdown
+            if hasattr(dropdown, 'container'):
+                dropdown.container.font_name = font_path
+                for item in dropdown.container.children:
+                    if isinstance(item, Button):
+                        item.font_name = font_path
+
+        if hasattr(self, 'root') and self.root:
+            for child in self.root.children:
+                if isinstance(child, GridLayout):
+                    for widget in child.children:
+                        if isinstance(widget, Button):
+                            widget.font_name = font_path
 
     def apply_theme(self):
         pass
@@ -351,67 +377,93 @@ class CustomCalculatorApp(App):
         self.auto_close_stack = 0
         self.just_opened_sqrt = False
         self.just_opened_log = False
-        boxlay = BoxLayout(orientation = "vertical", padding = 10)
-        gridlay = GridLayout(cols = 4, spacing = 3, size_hint = (1, 0.6), )
+        boxlay = BoxLayout(orientation="vertical", padding=10)
+        gridlay = GridLayout(cols=4, spacing=3, size_hint=(1, 0.55))
 
         kv_path = "customcalculator.kv"
-        current_font = None
-        with open(kv_path, "r", encoding="utf-8") as f:
-            for line in f:
-                if line.strip().startswith("font_name:"):
-                    parts = line.strip().split(":")
-                    if len(parts) > 1:
-                        font_path = parts[1].strip().strip('"').strip("'")
-                        current_font = os.path.basename(font_path).split('.')[0]
-                    break
+        current_font_path = None
+        if os.path.exists(kv_path):
+            with open(kv_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip().startswith("font_name:"):
+                        parts = line.strip().split(":")
+                        if len(parts) > 1:
+                            current_font_path = parts[1].strip().strip('"').strip("'")
+                        break
 
         font_folder = "fonts"
+        if not os.path.exists(font_folder):
+            os.makedirs(font_folder)
+
         font_files = [f for f in os.listdir(font_folder) if f.endswith(('.ttf', '.otf', '.ttc'))]
         self.font_items = [(os.path.splitext(f)[0], f) for f in font_files]
 
-        if current_font and current_font in [item[0] for item in self.font_items]:
-            initial_font = current_font
-        else:
-            initial_font = self.font_items[0][0] if self.font_items else ""
+        initial_font = None
+        initial_font_path = None
+
+        if current_font_path and os.path.exists(current_font_path):
+            font_filename = os.path.basename(current_font_path)
+            font_name = os.path.splitext(font_filename)[0]
+            if font_name in [item[0] for item in self.font_items]:
+                initial_font = font_name
+                initial_font_path = current_font_path
+
+        if not initial_font and self.font_items:
+            initial_font = self.font_items[0][0]
+            initial_font_path = f"fonts/{self.font_items[0][1]}"
 
         self.font_spinner = Spinner(
-            text=initial_font,
-            values=[item[0] for item in self.font_items],
-            size_hint=(1, 0.1)
+            text=initial_font if initial_font else "No fonts found",
+            values=[item[0] for item in self.font_items] if self.font_items else ["No fonts available"],
+            size_hint=(1, 0.1),
+            option_cls='SpinnerOption'
         )
         self.font_spinner.bind(text=self.change_font)
         boxlay.add_widget(self.font_spinner)
 
-        self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom", size_hint=(1, 0.4),
-                                 text_size=(0, 0), shorten=True, max_lines=2)
-        self.preview_label = Label( text="", font_size=20, halign="right", valign="top", color=(0.6, 0.6, 0.6, 1),
-                                    size_hint=(1, 0.1), text_size=(0, 0))
+        self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom",
+                                 size_hint=(1, 0.4), text_size=(0, 0), shorten=True, max_lines=2)
+        self.preview_label = Label(text="", font_size=20, halign="right", valign="top",
+                                   color=(0.6, 0.6, 0.6, 1), size_hint=(1, 0.1), text_size=(0, 0))
+
+        if initial_font_path:
+            self.update_fonts(initial_font_path)
+
         self.lebalboxlay.bind(size=lambda *args: self.update_label())
         self.preview_label.bind(size=lambda *args: self.update_label())
         boxlay.add_widget(self.lebalboxlay)
         boxlay.add_widget(self.preview_label)
 
-        buttons = [ "%", "CE", "C", "⌫",
-                    "log", "ln", "xʸ", "¹/x",
-                    "√", "(", ")", "÷",
-                    "7", "8", "9", "×",
-                    "4", "5", "6", "-",
-                    "1", "2", "3", "+",
-                    "π", "0", ".", "="
-                    ]
+        buttons = [
+            "%", "CE", "C", "⌫",
+            "log", "ln", "xʸ", "¹/x",
+            "√", "(", ")", "÷",
+            "7", "8", "9", "×",
+            "4", "5", "6", "-",
+            "1", "2", "3", "+",
+            "π", "0", ".", "="
+        ]
+
         for btn in buttons:
+            button = Button(text=btn)
+            if initial_font_path:
+                button.font_name = initial_font_path
+
             if btn in ".0123456789π":
-                gridlay.add_widget(Button(text=btn, on_press = self.add_number))
+                button.bind(on_press=self.add_number)
             elif btn in ("%", "√", "÷", "×", "-", "+", "(", ")", "log", "ln", "xʸ", "¹/x"):
-                gridlay.add_widget(Button(text=btn, on_press = self.add_operation))
+                button.bind(on_press=self.add_operation)
             elif btn == "CE":
-                gridlay.add_widget(Button(text = btn, on_press = self.clear_all))
+                button.bind(on_press=self.clear_all)
             elif btn == "C":
-                gridlay.add_widget(Button(text = btn, on_press = self.clear_enrty))
+                button.bind(on_press=self.clear_enrty)
             elif btn in "⌫":
-                gridlay.add_widget(Button(text = btn, on_press = self.backspace))
+                button.bind(on_press=self.backspace)
             else:
-                gridlay.add_widget(Button(text=btn, on_press = self.calc_result))
+                button.bind(on_press=self.calc_result)
+
+            gridlay.add_widget(button)
+
         boxlay.add_widget(gridlay)
         return boxlay
 
