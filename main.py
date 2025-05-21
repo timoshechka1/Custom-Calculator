@@ -18,9 +18,14 @@ from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.spinner import Spinner
+from kivy.core.window import Window
+from kivy.uix.scrollview import ScrollView
+from kivy.clock import Clock
+from kivy.metrics import sp
 
 
 SETTINGS_FILE = "calculator_settings.json"
+HISTORY_FILE = "calculator_history.txt"
 
 def load_settings():
     try:
@@ -49,10 +54,18 @@ class CustomCalculatorApp(App):
         self.bg_color = theme['bg_color']
         self.text_color = theme['text_color']
 
-    def update_label(self):
+    def update_label(self, *args):
         formatted_input = self.triad_separator(self.formula)
         self.lebalboxlay.text = formatted_input
         self.lebalboxlay.text_size = (self.lebalboxlay.width - 10, self.lebalboxlay.height - 10)
+        self.scroll_to_bottom()
+        self.lebalboxlay.text_size = (self.lebalboxlay.width - 10, None)
+        self.lebalboxlay.texture_update()
+        text_height = self.lebalboxlay.texture_size[1]
+        min_height = sp(40)
+        self.lebalboxlay.height = max(text_height, min_height)
+
+        self.scroll_to_bottom()
 
         try:
             if self.formula[-1] in ("÷", "×", "-", "+"):
@@ -74,11 +87,57 @@ class CustomCalculatorApp(App):
             else:
                 self.preview_label.text = f"= {preview}"
         except (ZeroDivisionError, ValueError, NameError, TypeError, OverflowError):
-            self.preview_label.text = "Erorr"
+            self.preview_label.text = "Error"
         except Exception:
             self.preview_label.text = ""
 
         self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
+
+    def update_label_height(self, instance, value):
+        instance.height = value[1] + 10
+
+    def load_history(self):
+        self.history_box.clear_widgets()
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                for line in lines:
+                    line = line.strip()
+                    if line:
+                        lbl = Label(
+                            text=line,
+                            font_size=14,
+                            size_hint_y=None,
+                            height=20,
+                            halign="right",
+                            valign="middle"
+                        )
+                        lbl.text_size = (self.history_scroll.width - 20, None)
+                        lbl.bind(size=lambda lbl, size: setattr(lbl, 'text_size', (size[0], None)))
+                        self.history_box.add_widget(lbl)
+                Clock.schedule_once(self.scroll_to_bottom)
+
+    def save_to_history(self, expression, result):
+        with open(HISTORY_FILE, "a", encoding="utf-8") as f:
+            f.write(f"{expression} = {result}\n")
+        lbl = Label(
+            text=f"{expression} = {result}",
+            font_size=14,
+            size_hint_y=None,
+            height=20,
+            halign="right",
+            valign="middle",
+            color = self.text_color
+        )
+        lbl.text_size = (self.history_scroll.width - 20, None)
+        lbl.bind(size=lambda lbl, size: setattr(lbl, 'text_size', (size[0], None)))
+        self.history_box.add_widget(lbl)
+
+        Clock.schedule_once(self.scroll_to_bottom)
+
+    def scroll_to_bottom(self, *args):
+        self.history_scroll.scroll_y = 0
+        self.formula_scroll.scroll_y = 0
 
     def on_start(self):
         self.update_widget_colors()
@@ -89,7 +148,6 @@ class CustomCalculatorApp(App):
             self.bg_color = THEMES[text]['bg_color']
             self.text_color = THEMES[text]['text_color']
             self.update_widget_colors()
-            # Сохраняем настройки
             save_settings({'theme': text})
 
     def update_spinner_dropdown(self, spinner):
@@ -103,6 +161,17 @@ class CustomCalculatorApp(App):
                         child.color = self.text_color
 
     def update_widget_colors(self):
+        theme = THEMES[self.current_theme]
+        self.bg_color = theme['bg_color']
+        self.text_color = theme['text_color']
+
+        if self.current_theme in ("Theme 4", "Theme 7", "Theme 9"):
+            Window.clearcolor = (0.95, 0.85, 0.7, 1)
+        elif self.current_theme in ("Theme 3"):
+            Window.clearcolor = (0.0, 0.0, 0.6667, 1)
+        else:
+            Window.clearcolor = (0.05, 0.05, 0.05, 1)
+
         if not hasattr(self, 'root'):
             return
 
@@ -155,21 +224,14 @@ class CustomCalculatorApp(App):
         self.font_spinner.font_name = font_path
         self.theme_spinner.font_name = font_path
 
-        if hasattr(self.font_spinner, '_dropdown') and self.font_spinner._dropdown:
-            dropdown = self.font_spinner._dropdown
-            if hasattr(dropdown, 'container'):
-                dropdown.container.font_name = font_path
-                for item in dropdown.container.children:
-                    if isinstance(item, Button):
-                        item.font_name = font_path
-
-        if hasattr(self.theme_spinner, '_dropdown') and self.theme_spinner._dropdown:
-            dropdown = self.theme_spinner._dropdown
-            if hasattr(dropdown, 'container'):
-                dropdown.container.font_name = font_path
-                for item in dropdown.container.children:
-                    if isinstance(item, Button):
-                        item.font_name = font_path
+        for spinner in [self.font_spinner, self.theme_spinner]:
+            if hasattr(spinner, '_dropdown') and spinner._dropdown:
+                dropdown = spinner._dropdown
+                if hasattr(dropdown, 'container'):
+                    for item in dropdown.container.children:
+                        if isinstance(item, Button):
+                            item.font_name = font_path
+                            item.font_size = spinner.font_size
 
         if hasattr(self, 'root') and self.root:
             for child in self.root.children:
@@ -246,7 +308,7 @@ class CustomCalculatorApp(App):
             self.formula += "π"
             self.eval_formula += num_eval_map["π"]
         else:
-            if self.formula in ("0", "Erorr") and symbol != ".":
+            if self.formula in ("0", "Error") and symbol != ".":
                 self.formula = ""
                 self.eval_formula = ""
             self.formula += symbol
@@ -266,7 +328,7 @@ class CustomCalculatorApp(App):
         op_eval = op_eval_map.get(op_display)
 
         if op_display == "√":
-            if self.formula in ("0", "", "Erorr"):
+            if self.formula in ("0", "", "Error"):
                 self.formula = "√"
                 self.eval_formula = op_eval
             else:
@@ -278,7 +340,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "log":
-            if self.formula in ("0", "", "Erorr"):
+            if self.formula in ("0", "", "Error"):
                 self.formula = "log("
                 self.eval_formula = op_eval
             else:
@@ -290,7 +352,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "ln":
-            if self.formula in ("0", "", "Erorr"):
+            if self.formula in ("0", "", "Error"):
                 self.formula = "ln("
                 self.eval_formula = op_eval
             else:
@@ -319,7 +381,7 @@ class CustomCalculatorApp(App):
             return
 
         if op_display == "(":
-            if self.formula in ("0", "", "Erorr"):
+            if self.formula in ("0", "", "Error"):
                 self.formula = "("
                 self.eval_formula = "("
             else:
@@ -332,7 +394,7 @@ class CustomCalculatorApp(App):
         if op_display == ")":
             if self.auto_close_stack > 0:
                 self.auto_close_stack -= 1
-            if self.formula in ("0", "", "Erorr"):
+            if self.formula in ("0", "", "Error"):
                 self.formula = ")"
                 self.eval_formula = ")"
             else:
@@ -357,7 +419,6 @@ class CustomCalculatorApp(App):
                 self.auto_close_stack -= 1
             self.just_opened_sqrt = False
             self.auto_close_stack = 0
-            print(self.eval_formula)
 
             if self.formula[-1] in ("÷", "×", "-", "+"):
                 result = eval(self.eval_formula[:-1])
@@ -365,16 +426,17 @@ class CustomCalculatorApp(App):
                 result = eval(self.eval_formula)
 
             if result % 1 == 0:
-                self.formula = str(int(result))
-                self.eval_formula = str(int(result))
+                result_to_display = str(int(result))
             else:
-                self.formula = str(round(result, 8))
-                self.eval_formula = str(round(result, 8))
+                result_to_display = str(round(result, 8))
 
+            self.save_to_history(self.formula, result_to_display)
+            self.formula = result_to_display
+            self.eval_formula = result_to_display
             self.update_label()
         except Exception as e:
-            self.formula = "Erorr"
-            self.eval_formula = "Erorr"
+            self.formula = "Error"
+            self.eval_formula = "Error"
             self.update_label()
 
     def clear_all(self, instance):
@@ -384,6 +446,8 @@ class CustomCalculatorApp(App):
         self.just_opened_sqrt = False
         self.just_opened_log = False
         self.update_label()
+        open(HISTORY_FILE, "w", encoding="utf-8").close()
+        self.history_box.clear_widgets()
 
     def clear_enrty(self, instance):
         self.formula = "0"
@@ -391,7 +455,7 @@ class CustomCalculatorApp(App):
         self.update_label()
 
     def backspace(self, instance):
-        if self.formula in ("0", "Erorr"):
+        if self.formula in ("0", "Error"):
             return
         if self.eval_formula[-12:-2] == "math.sqrt(":
             self.formula = self.formula[:-1]
@@ -443,7 +507,6 @@ class CustomCalculatorApp(App):
         self.just_opened_log = False
         boxlay = BoxLayout(orientation="vertical", padding=10)
         spinner_box = BoxLayout(orientation="horizontal", size_hint=(1, 0.1), spacing=5)
-        gridlay = GridLayout(cols=4, spacing=3, size_hint=(1, 0.55))
 
         kv_path = "customcalculator.kv"
         current_font_path = None
@@ -489,18 +552,47 @@ class CustomCalculatorApp(App):
             text=self.current_theme,
             values=list(THEMES.keys()),
             size_hint=(0.3, 1),
-            option_cls='SpinnerOption',
-            background_color=self.bg_color,
-            color=self.text_color
+            option_cls='SpinnerOption'
         )
+        self.theme_spinner.font_name = initial_font_path if initial_font_path else None
+        self.theme_spinner.bind(text=self.change_theme)
+
         self.theme_spinner.bind(text=self.change_theme)
         spinner_box.add_widget(self.font_spinner)
         spinner_box.add_widget(self.theme_spinner)
         boxlay.add_widget(spinner_box)
-        gridlay = GridLayout(cols=4, spacing=3, size_hint=(1, 0.55))
 
-        self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom",
-                                 size_hint=(1, 0.4), text_size=(0, 0), shorten=True, max_lines=2, color=self.text_color)
+
+        self.history_box = BoxLayout(orientation='vertical', size_hint=(1, None), spacing=2)
+        self.history_box.bind(minimum_height=self.history_box.setter('height'))
+        self.history_scroll = ScrollView(size_hint=(1, 0.3) )
+        self.history_scroll.add_widget(self.history_box)
+        boxlay.add_widget(self.history_scroll)
+
+        gridlay = GridLayout(cols=4, spacing=3, size_hint=(1, 0.8))
+
+        self.lebalboxlay = Label(
+            text="0",
+            font_size=40,
+            halign="right",
+            valign="bottom",
+            size_hint=(1, None),
+        )
+        self.lebalboxlay.bind(texture_size=self.update_label_height)
+        self.lebalboxlay.bind(
+            width=lambda instance, width: setattr(instance, 'text_size', (width, None))
+        )
+
+        self.formula_scroll = ScrollView(
+            size_hint=(1, 0.4),
+            do_scroll_x=False,
+            do_scroll_y=True,
+        )
+
+        self.formula_scroll.add_widget(self.lebalboxlay)
+
+        boxlay.add_widget(self.formula_scroll)
+
         self.preview_label = Label(text="", font_size=20, halign="right", valign="top",
                                    color=self.text_color, size_hint=(1, 0.1), text_size=(0, 0),)
 
@@ -509,7 +601,6 @@ class CustomCalculatorApp(App):
 
         self.lebalboxlay.bind(size=lambda *args: self.update_label())
         self.preview_label.bind(size=lambda *args: self.update_label())
-        boxlay.add_widget(self.lebalboxlay)
         boxlay.add_widget(self.preview_label)
 
         buttons = [
@@ -542,6 +633,7 @@ class CustomCalculatorApp(App):
 
             gridlay.add_widget(button)
 
+        self.load_history()
         boxlay.add_widget(gridlay)
         return boxlay
 
