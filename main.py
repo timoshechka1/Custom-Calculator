@@ -1,7 +1,5 @@
 from kivy.config import Config
-from kivy.properties import ListProperty, StringProperty
-from settings import THEMES, DEFAULT_THEME
-
+from settings import THEMES
 
 Config.set("graphics", "resizable", 1)
 Config.set("graphics", "width", 400)
@@ -11,6 +9,8 @@ Config.set('graphics', 'borderless', 0)
 import math
 import re
 import os
+import json
+from pathlib import Path
 
 from kivy.app import App
 from kivy.uix.button import Button
@@ -18,14 +18,36 @@ from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.spinner import Spinner
-from kivy.factory import Factory
-from kivy.lang import Builder
+
+
+SETTINGS_FILE = "calculator_settings.json"
+
+def load_settings():
+    try:
+        if Path(SETTINGS_FILE).exists():
+            with open(SETTINGS_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading settings: {e}")
+    return {'theme': 'Theme 1'}
+
+
+def save_settings(settings):
+    try:
+        with open(SETTINGS_FILE, 'w') as f:
+            json.dump(settings, f)
+    except Exception as e:
+        print(f"Error saving settings: {e}")
 
 
 class CustomCalculatorApp(App):
-    current_theme = StringProperty(DEFAULT_THEME)
-    bg_color = ListProperty(THEMES[DEFAULT_THEME]['bg_color'])
-    text_color = ListProperty(THEMES[DEFAULT_THEME]['text_color'])
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        settings = load_settings()
+        self.current_theme = settings.get('theme', 'Theme 1')
+        theme = THEMES[self.current_theme]
+        self.bg_color = theme['bg_color']
+        self.text_color = theme['text_color']
 
     def update_label(self):
         formatted_input = self.triad_separator(self.formula)
@@ -58,28 +80,17 @@ class CustomCalculatorApp(App):
 
         self.preview_label.text_size = (self.preview_label.width - 10, self.preview_label.height - 10)
 
+    def on_start(self):
+        self.update_widget_colors()
+
     def change_theme(self, spinner, text):
-        if text not in THEMES:
-            text = DEFAULT_THEME
-
-        self.current_theme = text
-        self.bg_color = THEMES[text]['bg_color']
-        self.text_color = THEMES[text]['text_color']
-        self.update_kv_theme()
-        self.theme_spinner.background_color = self.bg_color
-        self.theme_spinner.color = self.text_color
-
-    def update_kv_theme(self):
-        if not hasattr(self, 'root'):
-            return
-
-        for widget in self.root.walk():
-            if isinstance(widget, (Button, Label, Spinner)):
-                widget.background_color = self.bg_color
-                widget.color = self.text_color
-
-        self.update_spinner_dropdown(self.font_spinner)
-        self.update_spinner_dropdown(self.theme_spinner)
+        if text in THEMES:
+            self.current_theme = text
+            self.bg_color = THEMES[text]['bg_color']
+            self.text_color = THEMES[text]['text_color']
+            self.update_widget_colors()
+            # Сохраняем настройки
+            save_settings({'theme': text})
 
     def update_spinner_dropdown(self, spinner):
         if hasattr(spinner, '_dropdown') and spinner._dropdown:
@@ -97,30 +108,11 @@ class CustomCalculatorApp(App):
 
         for widget in self.root.walk():
             if isinstance(widget, (Button, Label, Spinner)):
-                current_font = widget.font_name
                 widget.background_color = self.bg_color
                 widget.color = self.text_color
-                widget.font_name = current_font
 
         self.update_spinner_dropdown(self.font_spinner)
         self.update_spinner_dropdown(self.theme_spinner)
-            
-    def on_start(self):
-        self.update_kv_theme()
-
-    def update_spinner_dropdown(self, spinner):
-        if hasattr(spinner, '_dropdown') and spinner._dropdown:
-            dropdown = spinner._dropdown
-            dropdown.background_color = self.bg_color
-            if hasattr(dropdown, 'container'):
-                for child in dropdown.container.children:
-                    if isinstance(child, Button):
-                        child.background_color = self.bg_color
-                        child.color = self.text_color
-
-    def parse_color(self, color_str):
-        parts = color_str.split(',')
-        return [float(p.strip()) for p in parts]
 
     def change_font(self, spinner, text):
         filename = None
@@ -240,7 +232,7 @@ class CustomCalculatorApp(App):
                     break
 
             if "." in last_number:
-                    return
+                return
 
         if self.formula[-1] == "π" and symbol not in "÷×-+":
             return
@@ -353,8 +345,8 @@ class CustomCalculatorApp(App):
             self.formula += op_display
             self.eval_formula += op_eval
         elif self.formula[-1] in "÷×-+" and op_display in "÷×-+":
-           self.formula = self.formula[:-1] + op_display
-           self.eval_formula = self.eval_formula[:-1] + op_eval
+            self.formula = self.formula[:-1] + op_display
+            self.eval_formula = self.eval_formula[:-1] + op_eval
 
         self.update_label()
 
@@ -508,9 +500,9 @@ class CustomCalculatorApp(App):
         gridlay = GridLayout(cols=4, spacing=3, size_hint=(1, 0.55))
 
         self.lebalboxlay = Label(text="0", font_size=40, halign="right", valign="bottom",
-                                 size_hint=(1, 0.4), text_size=(0, 0), shorten=True, max_lines=2)
+                                 size_hint=(1, 0.4), text_size=(0, 0), shorten=True, max_lines=2, color=self.text_color)
         self.preview_label = Label(text="", font_size=20, halign="right", valign="top",
-                                   color=(0.6, 0.6, 0.6, 1), size_hint=(1, 0.1), text_size=(0, 0))
+                                   color=self.text_color, size_hint=(1, 0.1), text_size=(0, 0),)
 
         if initial_font_path:
             self.update_fonts(initial_font_path)
@@ -531,7 +523,7 @@ class CustomCalculatorApp(App):
         ]
 
         for btn in buttons:
-            button = Button(text=btn)
+            button = Button(text=btn, background_color=self.bg_color, color=self.text_color)
             if initial_font_path:
                 button.font_name = initial_font_path
 

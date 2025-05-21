@@ -36,5 +36,3 @@ THEMES = {
         'text_color': [0, 0, 0, 1]
     }
 }
-
-DEFAULT_THEME = 'Theme 1'
